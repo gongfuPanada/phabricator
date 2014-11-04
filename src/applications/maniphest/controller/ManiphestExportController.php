@@ -19,7 +19,7 @@ final class ManiphestExportController extends ManiphestController {
     $request = $this->getRequest();
     $user = $request->getUser();
 
-    $ok = @include_once 'PHPExcel.php';
+    $ok = @include_once '/usr/share/PHPExcel/Classes/PHPExcel.php';
     if (!$ok) {
       $dialog = new AphrontDialogView();
       $dialog->setUser($user);
