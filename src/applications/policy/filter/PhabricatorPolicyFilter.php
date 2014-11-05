@@ -129,6 +129,12 @@ final class PhabricatorPolicyFilter {
     }
 
     $need_projects = array();
+
+    // PHID of the "Privacy Incidents" project
+    $security_phid = 'PHID-PROJ-nfsc3dwt6ptiihngwmfb';
+
+    // Always load membership in the "Privacy Incidents" project
+    $need_projects = array($security_phid);
     $need_policies = array();
     foreach ($objects as $key => $object) {
       $object_capabilities = $object->getCapabilities();
@@ -203,6 +209,38 @@ final class PhabricatorPolicyFilter {
 
       // If we make it here, we have all of the required capabilities.
       $filtered[$key] = $object;
+    }
+
+    // Filter out any "Privacy Incidents" tasks if the user isn't a member of the
+    // "Privacy Incidents" project.
+    foreach ($filtered as $key => $object) {
+      if ($object instanceof ManiphestTask) {
+        
+        // Even though we already have the task object, we need to
+        // execute a query here so that the task's project PHIDs are 
+        // loaded. These are loaded from "edges".
+        $tasks = id(new ManiphestTaskQuery())
+          ->setViewer(PhabricatorUser::getOmnipotentUser())
+          ->withPHIDs(array($object->getPHID()))
+          ->execute();
+        $task = reset($tasks);
+        
+        // $task->getProjectPHIDs was sometimes throwing an error
+        if (!$task) {
+          continue;
+        }
+        
+        $project_phids = $task->getProjectPHIDs();
+        if (in_array($security_phid, $project_phids)) { 
+          $isProjectMember = !empty($this->userProjects[$viewer_phid][$security_phid]);
+          $isAuthor = ($viewer_phid == $task->getAuthorPHID());
+          $isOwner = ($viewer_phid == $task->getOwnerPHID());
+          $isCCd = in_array($viewer_phid, $task->getCCPHIDs());
+          if (!($isProjectMember or $isAuthor or $isOwner or $isCCd)) {
+            unset($filtered[$key]);
+          }
+        }
+      }
     }
 
     return $filtered;
@@ -343,15 +381,20 @@ final class PhabricatorPolicyFilter {
       ->withPHIDs(array($phid))
       ->executeOne();
 
+    $object_name = pht(
+      '%s %s',
+      $handle->getTypeName(),
+      $handle->getObjectName());
+
     $is_serious = PhabricatorEnv::getEnvConfig('phabricator.serious-business');
     if ($is_serious) {
       $title = pht(
         'Access Denied: %s',
-        $handle->getObjectName());
+        $object_name);
     } else {
       $title = pht(
         'You Shall Not Pass: %s',
-        $handle->getObjectName());
+        $object_name);
     }
 
     $full_message = pht(
