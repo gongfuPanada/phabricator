@@ -40,23 +40,19 @@ final class AlmanacDeviceViewController
     $crumbs = $this->buildApplicationCrumbs();
     $crumbs->addTextCrumb($device->getName());
 
-    $xactions = id(new AlmanacDeviceTransactionQuery())
-      ->setViewer($viewer)
-      ->withObjectPHIDs(array($device->getPHID()))
-      ->execute();
-
-    $xaction_view = id(new PhabricatorApplicationTransactionView())
-      ->setUser($viewer)
-      ->setObjectPHID($device->getPHID())
-      ->setTransactions($xactions)
-      ->setShouldTerminate(true);
+    $timeline = $this->buildTransactionTimeline(
+      $device,
+      new AlmanacDeviceTransactionQuery());
+    $timeline->setShouldTerminate(true);
 
     return $this->buildApplicationPage(
       array(
         $crumbs,
         $box,
         $interfaces,
-        $xaction_view,
+        $this->buildAlmanacPropertiesTable($device),
+        $this->buildSSHKeysTable($device),
+        $timeline,
       ),
       array(
         'title' => $title,
@@ -67,7 +63,8 @@ final class AlmanacDeviceViewController
     $viewer = $this->getViewer();
 
     $properties = id(new PHUIPropertyListView())
-      ->setUser($viewer);
+      ->setUser($viewer)
+      ->setObject($device);
 
     return $properties;
   }
@@ -137,6 +134,69 @@ final class AlmanacDeviceViewController
     return id(new PHUIObjectBoxView())
       ->setHeader($header)
       ->appendChild($table);
+  }
+
+  private function buildSSHKeysTable(AlmanacDevice $device) {
+    $viewer = $this->getViewer();
+    $id = $device->getID();
+    $device_phid = $device->getPHID();
+
+    $can_edit = PhabricatorPolicyFilter::hasCapability(
+      $viewer,
+      $device,
+      PhabricatorPolicyCapability::CAN_EDIT);
+
+    $keys = id(new PhabricatorAuthSSHKeyQuery())
+      ->setViewer($viewer)
+      ->withObjectPHIDs(array($device_phid))
+      ->execute();
+
+    $table = id(new PhabricatorAuthSSHKeyTableView())
+      ->setUser($viewer)
+      ->setKeys($keys)
+      ->setCanEdit($can_edit)
+      ->setShowID(true)
+      ->setShowTrusted(true)
+      ->setNoDataString(pht('This device has no associated SSH public keys.'));
+
+    try {
+      PhabricatorSSHKeyGenerator::assertCanGenerateKeypair();
+      $can_generate = true;
+    } catch (Exception $ex) {
+      $can_generate = false;
+    }
+
+    $generate_uri = '/auth/sshkey/generate/?objectPHID='.$device_phid;
+    $upload_uri = '/auth/sshkey/upload/?objectPHID='.$device_phid;
+
+    $header = id(new PHUIHeaderView())
+      ->setHeader(pht('SSH Public Keys'))
+      ->addActionLink(
+        id(new PHUIButtonView())
+          ->setTag('a')
+          ->setHref($generate_uri)
+          ->setWorkflow(true)
+          ->setDisabled(!$can_edit || !$can_generate)
+          ->setText(pht('Generate Keypair'))
+          ->setIcon(
+            id(new PHUIIconView())
+              ->setIconFont('fa-lock')))
+      ->addActionLink(
+        id(new PHUIButtonView())
+          ->setTag('a')
+          ->setHref($upload_uri)
+          ->setWorkflow(true)
+          ->setDisabled(!$can_edit)
+          ->setText(pht('Upload Public Key'))
+          ->setIcon(
+            id(new PHUIIconView())
+              ->setIconFont('fa-upload')));
+
+    return id(new PHUIObjectBoxView())
+      ->setHeader($header)
+      ->appendChild($table);
+
+
   }
 
 }

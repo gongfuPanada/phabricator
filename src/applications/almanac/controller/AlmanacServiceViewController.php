@@ -40,23 +40,18 @@ final class AlmanacServiceViewController
     $crumbs = $this->buildApplicationCrumbs();
     $crumbs->addTextCrumb($service->getName());
 
-    $xactions = id(new AlmanacServiceTransactionQuery())
-      ->setViewer($viewer)
-      ->withObjectPHIDs(array($service->getPHID()))
-      ->execute();
-
-    $xaction_view = id(new PhabricatorApplicationTransactionView())
-      ->setUser($viewer)
-      ->setObjectPHID($service->getPHID())
-      ->setTransactions($xactions)
-      ->setShouldTerminate(true);
+    $timeline = $this->buildTransactionTimeline(
+      $service,
+      new AlmanacServiceTransactionQuery());
+    $timeline->setShouldTerminate(true);
 
     return $this->buildApplicationPage(
       array(
         $crumbs,
         $box,
         $bindings,
-        $xaction_view,
+        $this->buildAlmanacPropertiesTable($service),
+        $timeline,
       ),
       array(
         'title' => $title,
@@ -67,7 +62,8 @@ final class AlmanacServiceViewController
     $viewer = $this->getViewer();
 
     $properties = id(new PHUIPropertyListView())
-      ->setUser($viewer);
+      ->setUser($viewer)
+      ->setObject($service);
 
     return $properties;
   }

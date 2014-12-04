@@ -1117,6 +1117,29 @@ abstract class PhabricatorApplicationTransactionEditor
   }
 
 
+  public function getExpandedSupportTransactions(
+    PhabricatorLiskDAO $object,
+    PhabricatorApplicationTransaction $xaction) {
+
+    $xactions = array($xaction);
+    $xactions = $this->expandSupportTransactions(
+      $object,
+      $xactions);
+
+    if (count($xactions) == 1) {
+      return array();
+    }
+
+    foreach ($xactions as $index => $cxaction) {
+      if ($cxaction === $xaction) {
+        unset($xactions[$index]);
+        break;
+      }
+    }
+
+    return $xactions;
+  }
+
   private function expandSupportTransactions(
     PhabricatorLiskDAO $object,
     array $xactions) {
@@ -1899,6 +1922,8 @@ abstract class PhabricatorApplicationTransactionEditor
       $body->addReplySection($reply_section);
     }
 
+    $body->addEmailPreferenceSection();
+
     $template
       ->setFrom($this->getActingAsPHID())
       ->setSubjectPrefix($this->getMailSubjectPrefix())
@@ -2012,7 +2037,6 @@ abstract class PhabricatorApplicationTransactionEditor
   protected function buildReplyHandler(PhabricatorLiskDAO $object) {
     throw new Exception('Capability not supported.');
   }
-
 
   /**
    * @task mail
@@ -2159,10 +2183,11 @@ abstract class PhabricatorApplicationTransactionEditor
     }
 
     $body = new PhabricatorMetaMTAMailBody();
+    $body->setViewer($this->requireActor());
     $body->addRawSection(implode("\n", $headers));
 
     foreach ($comments as $comment) {
-      $body->addRawSection($comment);
+      $body->addRemarkupSection($comment);
     }
 
     if ($object instanceof PhabricatorCustomFieldInterface) {

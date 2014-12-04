@@ -144,14 +144,15 @@ final class PhabricatorMainMenuView extends AphrontView {
         'meta'  => array(
           'map' => array(
             $header_id => 'phabricator-application-menu-expanded',
-            $button_id => 'menu-icon-app-blue',
+            $button_id => 'sky',
           ),
         ),
       ),
       phutil_tag(
         'span',
         array(
-          'class' => 'phabricator-menu-button-icon sprite-menu menu-icon-app',
+          'class' => 'phabricator-menu-button-icon phui-icon-view '.
+                     'phui-font-fa fa-bars white',
           'id' => $button_id,
         ),
         ''));
@@ -188,10 +189,6 @@ final class PhabricatorMainMenuView extends AphrontView {
           ->setType(PHUIListItemView::TYPE_LABEL)
           ->setName(pht('Actions')));
       foreach ($actions as $action) {
-        $icon = $action->getIcon();
-        if ($icon) {
-          $action->appendChild($this->renderMenuIcon($icon));
-        }
         $view->addMenuItem($action);
       }
     }
@@ -210,14 +207,15 @@ final class PhabricatorMainMenuView extends AphrontView {
         'meta'  => array(
           'map' => array(
             $header_id => 'phabricator-search-menu-expanded',
-            $button_id => 'menu-icon-search-blue',
+            $button_id => 'sky',
           ),
         ),
       ),
       phutil_tag(
       'span',
       array(
-        'class' => 'phabricator-menu-button-icon sprite-menu menu-icon-search',
+        'class' => 'phabricator-menu-button-icon phui-icon-view '.
+                   'phui-font-fa fa-search white',
         'id' => $button_id,
       ),
       ''));
@@ -238,12 +236,11 @@ final class PhabricatorMainMenuView extends AphrontView {
   }
 
   private function renderPhabricatorLogo() {
-    $class = 'phabricator-main-menu-logo-image';
 
     return phutil_tag(
       'a',
       array(
-        'class' => 'phabricator-main-menu-logo',
+        'class' => 'phabricator-main-menu-brand',
         'href'  => '/',
       ),
       array(
@@ -256,7 +253,13 @@ final class PhabricatorMainMenuView extends AphrontView {
         phutil_tag(
           'span',
           array(
-            'class' => 'sprite-menu menu-logo-image '.$class,
+            'class' => 'sprite-menu phabricator-main-menu-eye',
+          ),
+          ''),
+          phutil_tag(
+          'span',
+          array(
+            'class' => 'sprite-menu phabricator-main-menu-logo',
           ),
           ''),
       ));
@@ -465,16 +468,6 @@ final class PhabricatorMainMenuView extends AphrontView {
       $dropdowns,
       $aural,
     );
-  }
-
-  private function renderMenuIcon($name) {
-    return phutil_tag(
-      'span',
-      array(
-        'class' => 'phabricator-core-menu-icon '.
-                   'sprite-menu menu-icon-'.$name,
-      ),
-      '');
   }
 
 }
