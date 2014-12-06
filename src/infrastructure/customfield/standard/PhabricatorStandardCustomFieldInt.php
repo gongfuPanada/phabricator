@@ -50,12 +50,20 @@ final class PhabricatorStandardCustomFieldInt
   public function applyApplicationSearchConstraintToQuery(
     PhabricatorApplicationSearchEngine $engine,
     PhabricatorCursorPagedPolicyAwareQuery $query,
-    $value) {
-
+    $value) { 
+      
     if (strlen($value)) {
-      $query->withApplicationSearchContainsConstraint(
-        $this->newNumericIndex(null),
-        $value);
+      if ($this->getFieldName() == 'Number of reports') {
+        $max = '1000';
+        $query->withApplicationSearchRangeConstraint(
+          $this->newNumericIndex(null),
+          $value,
+          $max);
+      } else {
+        $query->withApplicationSearchContainsConstraint(
+          $this->newNumericIndex(null),
+          $value);
+      }
     }
   }
 
