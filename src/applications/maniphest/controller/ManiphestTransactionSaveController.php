@@ -31,6 +31,9 @@ final class ManiphestTransactionSaveController extends ManiphestController {
         $request->getStr('comments'),
       ));
 
+    // Snapchat customization: ignore @mentions
+    $added_ccs = array();
+
     $cc_transaction = new ManiphestTransaction();
     $cc_transaction
       ->setTransactionType(ManiphestTransaction::TYPE_CCS);
@@ -136,7 +139,9 @@ final class ManiphestTransactionSaveController extends ManiphestController {
       // If we aren't making the user the new task owner and they aren't the
       // existing task owner, add them to CC unless they're aleady CC'd.
       if (!in_array($user->getPHID(), $task->getCCPHIDs())) {
-        $added_ccs[] = $user->getPHID();
+        // Snapchat customization: don't auto-subscribe people when they
+        // interact with a task        
+        //$added_ccs[] = $user->getPHID();
       }
     }
 
