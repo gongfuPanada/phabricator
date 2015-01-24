@@ -10,15 +10,27 @@ final class ManiphestCreateMailReceiver extends PhabricatorMailReceiver {
   public function canAcceptMail(PhabricatorMetaMTAReceivedMail $mail) {
     $config_key = 'metamta.maniphest.public-create-email';
     $create_address = PhabricatorEnv::getEnvConfig($config_key);
-    $privacy_incidents_address = 'dummy-list@snapchat.com';
 
     foreach ($mail->getToAddresses() as $to_address) {
-      if ($this->matchAddresses($create_address, $to_address) ||
-          $this->matchAddresses($privacy_incidents_address, $to_address)) {
+      if ($this->matchAddresses($create_address, $to_address)) {
         return true;
       }
     }
 
+    if (ManiphestCreateMailReceiver::isPrivacyIncident($mail)) {
+        return true;
+    }
+
+    return false;
+  }
+
+  public static function isPrivacyIncident(PhabricatorMetaMTAReceivedMail $mail) {
+    $privacy_incidents_address = 'dummy-list@snapchat.com';
+    foreach ($mail->getToAddresses() as $to_address) {
+      if (PhabricatorMailReceiver::matchAddresses($privacy_incidents_address, $to_address)) {
+        return true;
+      }
+    }
     return false;
   }
 
