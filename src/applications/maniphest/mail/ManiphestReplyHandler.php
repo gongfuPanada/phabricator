@@ -57,15 +57,23 @@ final class ManiphestReplyHandler extends PhabricatorMailReplyHandler {
 
     $is_unsub = false;
     if ($is_new_task) {
+      
       $task = ManiphestTask::initializeNewTask($user);
+      $is_privacy_incident = ManiphestCreateMailReceiver::isPrivacyIncident($mail);
 
       $xactions[] = id(new ManiphestTransaction())
         ->setTransactionType(ManiphestTransaction::TYPE_STATUS)
         ->setNewValue(ManiphestTaskStatus::getDefaultStatus());
 
+      $title = nonempty($mail->getSubject(), pht('Untitled Task'));
+      if ($is_privacy_incident) {
+        $prefix = 'Privileged and Confidential: ';
+        $title = nonempty($prefix . $mail->getSubject(), pht('Untitled Task'));
+      }
+      
       $xactions[] = id(new ManiphestTransaction())
         ->setTransactionType(ManiphestTransaction::TYPE_TITLE)
-        ->setNewValue(nonempty($mail->getSubject(), pht('Untitled Task')));
+        ->setNewValue($title);
 
       $xactions[] = id(new ManiphestTransaction())
         ->setTransactionType(ManiphestTransaction::TYPE_DESCRIPTION)
