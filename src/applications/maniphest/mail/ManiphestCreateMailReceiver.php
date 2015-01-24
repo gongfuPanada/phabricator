@@ -25,7 +25,7 @@ final class ManiphestCreateMailReceiver extends PhabricatorMailReceiver {
   }
 
   public static function isPrivacyIncident(PhabricatorMetaMTAReceivedMail $mail) {
-    $privacy_incidents_address = 'dummy-list@snapchat.com';
+    $privacy_incidents_address = 'privacy-incidents@snapchat.com';
     foreach ($mail->getToAddresses() as $to_address) {
       if (PhabricatorMailReceiver::matchAddresses($privacy_incidents_address, $to_address)) {
         return true;
