@@ -59,18 +59,31 @@ final class ManiphestReplyHandler extends PhabricatorMailReplyHandler {
     if ($is_new_task) {
       
       $task = ManiphestTask::initializeNewTask($user);
+      $title = nonempty($mail->getSubject(), pht('Untitled Task'));
+      
       $is_privacy_incident = ManiphestCreateMailReceiver::isPrivacyIncident($mail);
+      if ($is_privacy_incident) {
+        // Add the privacy incidents project tag
+        $privacy_incidents_phid = 'PHID-PROJ-nfsc3dwt6ptiihngwmfb';
+        $projects = array('PHID-PROJ-nfsc3dwt6ptiihngwmfb');
+        $xactions[] = id(new ManiphestTransaction())
+          ->setTransactionType(PhabricatorTransactions::TYPE_EDGE)
+          ->setMetadataValue('edge:type', PhabricatorProjectObjectHasProjectEdgeType::EDGECONST)
+          ->setNewValue(
+            array(
+              '+' => array_fuse($projects),
+            ));
 
+        // Add a prefix to the task title
+        $prefix = 'Privileged and Confidential: ';
+        $prefix = '';
+        $title = nonempty($prefix . $mail->getSubject(), pht('Untitled Task'));
+      }
+      
       $xactions[] = id(new ManiphestTransaction())
         ->setTransactionType(ManiphestTransaction::TYPE_STATUS)
         ->setNewValue(ManiphestTaskStatus::getDefaultStatus());
 
-      $title = nonempty($mail->getSubject(), pht('Untitled Task'));
-      if ($is_privacy_incident) {
-        $prefix = 'Privileged and Confidential: ';
-        $title = nonempty($prefix . $mail->getSubject(), pht('Untitled Task'));
-      }
-      
       $xactions[] = id(new ManiphestTransaction())
         ->setTransactionType(ManiphestTransaction::TYPE_TITLE)
         ->setNewValue($title);
