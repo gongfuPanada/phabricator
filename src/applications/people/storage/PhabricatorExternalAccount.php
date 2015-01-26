@@ -119,7 +119,7 @@ final class PhabricatorExternalAccount extends PhabricatorUserDAO
     // clearly not an error, but don't disclose any identifying information.
 
     $map = array(
-      'email' => pht('Email User'),
+      'email' => $this->accountID,
     );
 
     $type = $this->getAccountType();
