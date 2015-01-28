@@ -6,6 +6,9 @@ require_once $root.'/scripts/__init_script__.php';
 
 echo "Examining users.\n";
 foreach (new LiskMigrationIterator(new PhabricatorUser()) as $user) {
+  $username = $user->getUsername();
+  echo "Changing preferences for " . $username . "...";
+  
   $preferences = $user->loadPreferences();
   $mailtags = getAllTags($user);
   
