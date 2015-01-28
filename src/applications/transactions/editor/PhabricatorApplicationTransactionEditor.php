@@ -1905,8 +1905,6 @@ abstract class PhabricatorApplicationTransactionEditor
     // We added a customization where @mentioning a user doesn't cc them, but we
     // still want to send them an email, so we extract @mentions from comments here
     foreach ($xactions as $xaction) {
-      phlog($xaction);
-      phlog($xaction->getTransactionType());
       if ($xaction->getTransactionType() == PhabricatorTransactions::TYPE_COMMENT) {
         // Grab @mentioned phids
         $comment = $xaction->getComment()->getContent();
