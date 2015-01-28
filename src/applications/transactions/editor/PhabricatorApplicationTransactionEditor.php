@@ -1901,7 +1901,23 @@ abstract class PhabricatorApplicationTransactionEditor
       return;
     }
 
+    $mentioned = array();
+    // We added a customization where @mentioning a user doesn't cc them, but we
+    // still want to send them an email, so we extract @mentions from comments here
+    foreach ($xactions as $xaction) {
+      if ($xaction->getTransactionType() == PhabricatorTransactions::TYPE_COMMENT) {
+        // Grab @mentioned phids
+        $comment = $xaction->getComment()->getContent();
+        $mentioned = PhabricatorMarkupEngine::extractPHIDsFromMentions(
+          $this->getActor(),
+          array(
+            $comment,
+          ));
+      }
+    }
+    $mentioned = array_filter(array_unique($mentioned));
     $email_to = array_filter(array_unique($this->getMailTo($object)));
+    $email_to = array_merge($email_to, $mentioned);
     $email_cc = array_filter(array_unique($this->getMailCC($object)));
 
     $phids = array_merge($email_to, $email_cc);

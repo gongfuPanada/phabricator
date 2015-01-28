@@ -412,6 +412,31 @@ final class ManiphestTransactionEditor
     array $xactions) {
 
     $xactions = mfilter($xactions, 'shouldHide', true);
+    
+    // We only want to send select status and priority updates
+    foreach ($xactions as $key => $xaction) {
+      $new = $xaction->getNewValue();
+      switch ($xaction->getTransactionType()) {
+        case ManiphestTransaction::TYPE_PRIORITY:
+          $unbreak_now_priority = "100";
+          if ($new != $unbreak_now_priority) {
+            unset($xactions[$key]);
+          }
+          break;
+        case ManiphestTransaction::TYPE_STATUS:
+          $statuses_to_report_on = array(
+            "open",
+            "fixed",
+            "invalid",
+            "wontfix"
+          );
+          if (!in_array($new, $statuses_to_report_on)) {
+              unset($xactions[$key]);
+          }
+          break;
+      }
+    }
+    
     return $xactions;
   }
 
