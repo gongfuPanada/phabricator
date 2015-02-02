@@ -425,7 +425,7 @@ final class ManiphestTaskSearchEngine
           id(new AphrontFormTextControl())
             ->setName('limit')
             ->setLabel(pht('Page Size'))
-            ->setValue($saved->getParameter('limit', 100)));
+            ->setValue($saved->getParameter('limit', 1000)));
     }
   }
 
