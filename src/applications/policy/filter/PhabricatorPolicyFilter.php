@@ -134,11 +134,13 @@ final class PhabricatorPolicyFilter {
     $security_reviews_phid = 'PHID-PROJ-vnb3ixl4n25ehk6q3blg';
     $vendor_reviews_phid = 'PHID-PROJ-fxi5sewx26qkb6dwuluu';
     $information_security_phid = 'PHID-PROJ-lqn6lcy2fwwmnyxqdg4p';
+    $security_vulnerability_phid = 'PHID-PROJ-xw24623wqvtsqngktfac';
     $restricted_projects = array(
       $privacy_incidents_phid, 
       $security_reviews_phid,
       $vendor_reviews_phid, 
-      $information_security_phid
+      $information_security_phid,
+      $security_vulnerability_phid
     );
 
     // Always load membership in the "Privacy Incidents" project
