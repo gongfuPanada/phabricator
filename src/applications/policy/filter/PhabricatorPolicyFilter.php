@@ -143,7 +143,6 @@ final class PhabricatorPolicyFilter {
       $security_vulnerability_phid
     );
 
-    // Always load membership in the "Privacy Incidents" project
     $need_projects = $restricted_projects; 
     $need_policies = array();
     foreach ($objects as $key => $object) {
@@ -187,6 +186,11 @@ final class PhabricatorPolicyFilter {
       }
     }
 
+    $projects_with_viewer_as_member = id(new PhabricatorProjectQuery())
+      ->setViewer(PhabricatorUser::getOmnipotentUser())
+      ->withMemberPHIDs(array($viewer->getPHID()))
+      ->execute();
+    
     if ($need_projects) {
       $need_projects = array_unique($need_projects);
 
@@ -197,14 +201,11 @@ final class PhabricatorPolicyFilter {
       // visibility anyway. Without this, we may load other projects and
       // re-enter the policy filter and generally create a huge mess.
 
-      $projects = id(new PhabricatorProjectQuery())
-        ->setViewer(PhabricatorUser::getOmnipotentUser())
-        ->withMemberPHIDs(array($viewer->getPHID()))
-        ->withPHIDs($need_projects)
-        ->execute();
-
-      foreach ($projects as $project) {
-        $this->userProjects[$viewer_phid][$project->getPHID()] = true;
+      foreach ($projects_with_viewer_as_member as $project) {
+        $project_phid = $project->getPHID();
+        if (in_array($project_phid, $need_projects)) {
+          $this->userProjects[$viewer_phid][$project_phid] = true;
+        }
       }
     }
 
@@ -243,11 +244,12 @@ final class PhabricatorPolicyFilter {
         $project_phids = $task->getProjectPHIDs();
         foreach ($restricted_projects as $restricted_project_phid) {
           if (in_array($restricted_project_phid, $project_phids)) {
-            $isProjectMember = !empty($this->userProjects[$viewer_phid][$restricted_project_phid]);
+            $isProjectMember = $this->isProjectMember($projects_with_viewer_as_member, $project_phids);
+            $isRestrictedProjectMember = !empty($this->userProjects[$viewer_phid][$restricted_project_phid]);
             $isAuthor = ($viewer_phid == $task->getAuthorPHID());
             $isOwner = ($viewer_phid == $task->getOwnerPHID());
             $isCCd = in_array($viewer_phid, $task->getCCPHIDs());
-            if (!($isProjectMember or $isAuthor or $isOwner or $isCCd)) {
+            if (!($isProjectMember or $isRestrictedProjectMember or $isAuthor or $isOwner or $isCCd)) {
               unset($filtered[$key]);
             }
           }
@@ -258,6 +260,21 @@ final class PhabricatorPolicyFilter {
 
     return $filtered;
   }
+
+  private function isProjectMember($projects_with_viewer_as_member, $project_phids) {
+    $project_phids_with_viewer_as_member = array();
+    foreach ($projects_with_viewer_as_member as $project) {
+        array_push($project_phids_with_viewer_as_member, $project->getPHID());
+    }
+    
+    foreach ($project_phids_with_viewer_as_member as $project_phid) {
+      if (in_array($project_phid, $project_phids)) {
+        return True;
+      }
+    }
+    return False;
+  }
+
 
   private function checkCapability(
     PhabricatorPolicyInterface $object,
