@@ -131,10 +131,10 @@ final class PhabricatorPolicyFilter {
     $need_projects = array();
 
     // PHID of the "Privacy Incidents" project
-    $security_phid = 'PHID-PROJ-nfsc3dwt6ptiihngwmfb';
+    $privacy_incidents_phid = 'PHID-PROJ-nfsc3dwt6ptiihngwmfb';
 
     // Always load membership in the "Privacy Incidents" project
-    $need_projects = array($security_phid);
+    $need_projects = array($privacy_incidents_phid);
     $need_policies = array();
     foreach ($objects as $key => $object) {
       $object_capabilities = $object->getCapabilities();
@@ -231,8 +231,8 @@ final class PhabricatorPolicyFilter {
         }
         
         $project_phids = $task->getProjectPHIDs();
-        if (in_array($security_phid, $project_phids)) { 
-          $isProjectMember = !empty($this->userProjects[$viewer_phid][$security_phid]);
+        if (in_array($privacy_incidents_phid, $project_phids)) { 
+          $isProjectMember = !empty($this->userProjects[$viewer_phid][$privacy_incidents_phid]);
           $isAuthor = ($viewer_phid == $task->getAuthorPHID());
           $isOwner = ($viewer_phid == $task->getOwnerPHID());
           $isCCd = in_array($viewer_phid, $task->getCCPHIDs());
