@@ -130,11 +130,19 @@ final class PhabricatorPolicyFilter {
 
     $need_projects = array();
 
-    // PHID of the "Privacy Incidents" project
     $privacy_incidents_phid = 'PHID-PROJ-nfsc3dwt6ptiihngwmfb';
+    $security_reviews_phid = 'PHID-PROJ-vnb3ixl4n25ehk6q3blg';
+    $vendor_reviews_phid = 'PHID-PROJ-fxi5sewx26qkb6dwuluu';
+    $information_security_phid = 'PHID-PROJ-lqn6lcy2fwwmnyxqdg4p';
+    $restricted_projects = array(
+      $privacy_incidents_phid, 
+      $security_reviews_phid,
+      $vendor_reviews_phid, 
+      $information_security_phid
+    );
 
     // Always load membership in the "Privacy Incidents" project
-    $need_projects = array($privacy_incidents_phid);
+    $need_projects = $restricted_projects; 
     $need_policies = array();
     foreach ($objects as $key => $object) {
       $object_capabilities = $object->getCapabilities();
@@ -231,15 +239,18 @@ final class PhabricatorPolicyFilter {
         }
         
         $project_phids = $task->getProjectPHIDs();
-        if (in_array($privacy_incidents_phid, $project_phids)) { 
-          $isProjectMember = !empty($this->userProjects[$viewer_phid][$privacy_incidents_phid]);
-          $isAuthor = ($viewer_phid == $task->getAuthorPHID());
-          $isOwner = ($viewer_phid == $task->getOwnerPHID());
-          $isCCd = in_array($viewer_phid, $task->getCCPHIDs());
-          if (!($isProjectMember or $isAuthor or $isOwner or $isCCd)) {
-            unset($filtered[$key]);
+        foreach ($restricted_projects as $restricted_project_phid) {
+          if (in_array($restricted_project_phid, $project_phids)) {
+            $isProjectMember = !empty($this->userProjects[$viewer_phid][$restricted_project_phid]);
+            $isAuthor = ($viewer_phid == $task->getAuthorPHID());
+            $isOwner = ($viewer_phid == $task->getOwnerPHID());
+            $isCCd = in_array($viewer_phid, $task->getCCPHIDs());
+            if (!($isProjectMember or $isAuthor or $isOwner or $isCCd)) {
+              unset($filtered[$key]);
+            }
           }
         }
+
       }
     }
 
